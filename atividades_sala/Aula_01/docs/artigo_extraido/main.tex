@@ -1,0 +1,164 @@
+\documentclass[12pt]{unisenaiclass}
+\usepackage{unisenaistyle}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{caption}
+
+\usepackage{csquotes}
+\usepackage[backend=biber, style=abnt]{biblatex}
+\addbibresource{referencias.bib}
+
+\title{DESENVOLVIMENTO DE UM DASHBOARD HMI PARA MONITORAMENTO DE SENSORES IoT COM NODE.JS, NODE-RED E NEXT.JS}
+\subtitle{Development of an HMI Dashboard for IoT Sensor Monitoring Using Node.js, Node-RED and Next.js}
+
+\author{
+    \textbf{João Pedro Americo Matias} \thanks{Estudante do curso de Análise e Desenvolvimento de Sistemas — Turma Toyota-3. Faculdade de Tecnologia SENAI Gaspar Ricardo Júnior, Sorocaba — SP, 1º Semestre de 2026. E-mail: joaopedromatias2007@gmail.com}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{resumo}
+Este artigo apresenta o desenvolvimento de um sistema de monitoramento IoT composto por uma API RESTful desenvolvida em Node.js, uma interface de dashboard HMI construída com Next.js e React, e um fluxo de simulação de sensores implementado no Node-RED. O sistema permite o monitoramento em tempo real de três sensores, exibindo valores de temperatura, pressão e umidade por meio de gauges circulares interativos, além de indicadores LED para sensores de presença e trava de segurança. A comunicação entre os componentes é realizada por meio de requisições HTTP, seguindo a arquitetura REST. Os resultados demonstram a viabilidade da solução para aplicações de automação industrial, residencial e agrícola.
+\end{resumo}
+
+\begin{justify}
+    \textbf{Palavras-chave:} IoT; Node.js; Next.js; Node-RED; Dashboard; HMI; API REST; Sensores.
+\end{justify}
+
+\begin{abstract1}
+This paper presents the development of an IoT monitoring system composed of a RESTful API built with Node.js, an HMI dashboard interface developed with Next.js and React, and a sensor simulation flow implemented in Node-RED. The system enables real-time monitoring of three sensors, displaying temperature, pressure, and humidity values through interactive circular gauges, alongside LED indicators for presence sensors and security locks. Communication between components is carried out through HTTP requests following the REST architecture. Results demonstrate the feasibility of the solution for industrial, residential, and agricultural automation applications.
+\end{abstract1}
+
+\begin{justify}
+    \textbf{Keywords:} IoT; Node.js; Next.js; Node-RED; Dashboard; HMI; REST API; Sensors.
+\end{justify}
+
+
+
+\section{Introdução}
+
+A Internet das Coisas (IoT) tem se consolidado como uma das tecnologias mais relevantes para automação e monitoramento em diferentes setores. A capacidade de conectar dispositivos físicos à internet e visualizar seus dados em tempo real representa um avanço significativo para aplicações industriais, residenciais e agrícolas.
+
+Neste contexto, as interfaces HMI (\textit{Human Machine Interface}) desempenham papel central, pois traduzem dados brutos de sensores em informações visuais compreensíveis para operadores e engenheiros. A combinação de ferramentas como Node.js, Node-RED e Next.js permite construir sistemas IoT completos, do backend ao frontend, de forma acessível e escalável.
+
+Este trabalho tem como objetivo apresentar o desenvolvimento de um sistema integrado de monitoramento IoT, composto por uma API RESTful, um fluxo de simulação de sensores via Node-RED e um dashboard HMI com atualização em tempo real, demonstrando a viabilidade técnica da arquitetura proposta.
+
+\section{Revisão de Literatura}
+
+Segundo Aguiar (2023), a Internet das Coisas pode ser descrita como uma rede de objetos físicos conectados à internet, capazes de interagir por meio de sensores e softwares. O autor destaca que a utilização de APIs RESTful é fundamental para conectar o mundo físico ao digital, permitindo que dispositivos troquem dados de forma eficiente e escalável.
+
+De acordo com Rodrigues (2024), a expansão de funcionalidades em sistemas IoT depende diretamente da integração com APIs HTTP, que possibilitam maior flexibilidade e controle remoto dos dispositivos. A autora enfatiza que o uso de arquiteturas REST garante interoperabilidade entre diferentes plataformas e tecnologias, tornando os sistemas mais adaptáveis às necessidades dos usuários.
+
+O Node-RED é uma ferramenta de programação visual baseada em fluxos desenvolvida pela IBM, amplamente utilizada para integração de dispositivos IoT. Sua arquitetura orientada a mensagens permite conectar sensores, APIs e serviços web de forma simples e visual \cite{ibm2023nodered}.
+
+Interfaces HMI modernas, segundo Lima (2022), devem priorizar a clareza visual e a atualização em tempo real, características fundamentais para que operadores tomem decisões rápidas com base nos dados exibidos. O uso de gauges circulares e indicadores de status são padrões consolidados nesse tipo de interface.
+
+\section{Metodologia}
+
+O sistema foi desenvolvido em três camadas principais, conforme descrito a seguir.
+
+\subsection{Backend — API RESTful com Node.js}
+
+A camada de backend foi desenvolvida utilizando Node.js com o framework Express. A API opera na porta 8080 e utiliza armazenamento em memória para os dados dos sensores. Os endpoints implementados estão descritos na Tabela~\ref{tab:endpoints}.
+
+\begin{table}[H]
+    \centering
+    \caption{Endpoints da API RESTful.}
+    \label{tab:endpoints}
+    \begin{tabular}{|c|c|p{6cm}|}
+        \hline
+        \textbf{Método} & \textbf{Rota} & \textbf{Descrição} \\ \hline
+        GET  & /iot             & Retorna todos os dados de sensores \\ \hline
+        GET  & /sensor/:id      & Retorna um sensor pelo ID \\ \hline
+        GET  & /usuarios        & Retorna a lista de usuários \\ \hline
+        GET  & /devices         & Retorna a lista de dispositivos \\ \hline
+        POST & /newData         & Cria um novo registro de sensor \\ \hline
+        PUT  & /sensor/:id      & Atualiza ou cria um sensor (upsert) \\ \hline
+    \end{tabular}
+\end{table}
+
+O endpoint \texttt{PUT /sensor/:id} foi implementado com lógica de \textit{upsert}: caso o sensor com o ID informado já exista, seus dados são atualizados; caso contrário, um novo registro é inserido. Isso elimina a necessidade de criação prévia dos sensores antes de iniciar a atualização.
+
+\subsection{Simulação de Sensores — Node-RED}
+
+O Node-RED foi utilizado para simular o comportamento de dispositivos IoT reais. O fluxo implementado é composto por dois subfluxos:
+
+\begin{itemize}
+    \item \textbf{Criação de sensor:} um nó \textit{Inject} dispara manualmente uma requisição \texttt{POST /newData} com valores iniciais zerados, criando o primeiro registro na API.
+    \item \textbf{Atualização periódica:} um nó \textit{Inject} configurado para disparar a cada 5 segundos aciona uma função que gera dados aleatórios para os sensores de ID 1, 2 e 3. Para cada sensor, a função monta uma mensagem com a URL dinâmica \texttt{http://localhost:8080/sensor/\{id\}} e envia uma requisição \texttt{PUT} com os novos valores.
+\end{itemize}
+
+A geração de dados randômicos na função Node-RED segue a seguinte lógica para cada sensor:
+
+\begin{itemize}
+    \item Temperatura: valor aleatório entre 0 e 100 °C
+    \item Pressão: valor aleatório entre 900 e 1100 hPa
+    \item Umidade: valor aleatório entre 0 e 100\%
+    \item Sensor de presença e trava de segurança: valores booleanos aleatórios
+\end{itemize}
+
+\subsection{Frontend — Dashboard HMI com Next.js}
+
+A interface de usuário foi desenvolvida com Next.js 16 e React 19, utilizando Tailwind CSS 4 para estilização. O dashboard apresenta tema escuro (\textit{dark mode}) e visual industrial, características típicas de sistemas HMI.
+
+A atualização dos dados ocorre automaticamente a cada 3 segundos por meio de um intervalo configurado com o hook \texttt{useEffect} do React, que realiza requisições \texttt{GET /iot} à API.
+
+A interface é composta por dois elementos principais:
+
+\begin{itemize}
+    \item \textbf{Painéis de sensores:} três painéis exibidos lado a lado, um para cada sensor. Cada painel contém gauges circulares SVG para temperatura, pressão e umidade, além de indicadores LED para o sensor de presença e a trava de segurança.
+    \item \textbf{Tabela histórica:} exibe todas as leituras registradas na API, com as leituras mais recentes no topo, e permite editar individualmente cada registro via modal.
+\end{itemize}
+
+Os gauges circulares foram implementados diretamente em SVG, utilizando a propriedade \texttt{stroke-dasharray} para criar o arco proporcional ao valor atual dentro do intervalo mínimo-máximo de cada grandeza. Um efeito de \textit{glow} é aplicado ao arco quando o valor é maior que zero.
+
+\section{Resultados e Discussões}
+
+O sistema apresentou os seguintes resultados:
+
+\begin{itemize}
+    \item Monitoramento em tempo real dos três sensores com atualização a cada 3 segundos no frontend e envio de novos dados a cada 5 segundos pelo Node-RED.
+    \item Visualização clara dos valores de temperatura, pressão e umidade por meio de gauges circulares com animação suave na transição entre leituras.
+    \item Indicadores LED de presença e trava de segurança com efeito de brilho verde quando ativos.
+    \item Histórico completo de todas as leituras com possibilidade de edição via modal.
+    \item Topbar com indicador de status da conexão com a API (ONLINE/DESCONECTADO) e horário da última sincronização.
+\end{itemize}
+
+A Tabela~\ref{tab:sensores} exemplifica os dados monitorados pelo sistema.
+
+\begin{table}[H]
+    \centering
+    \caption{Exemplo de leitura dos sensores monitorados.}
+    \label{tab:sensores}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{Sensor} & \textbf{Valor} & \textbf{Unidade} \\ \hline
+        Temperatura  & 45,3  & °C   \\ \hline
+        Pressão      & 1013  & hPa  \\ \hline
+        Umidade      & 62    & \%   \\ \hline
+        Presença     & Detectada & —  \\ \hline
+        Trava        & Ativada   & —  \\ \hline
+    \end{tabular}
+\end{table}
+
+A arquitetura adotada mostrou-se eficiente para o cenário proposto. A separação entre backend, simulador e frontend facilita a manutenção e a escalabilidade do sistema. A utilização do Node-RED como camada de simulação permite substituí-lo futuramente por dispositivos físicos reais sem alterações no backend ou no frontend.
+
+\section{Conclusão}
+
+O projeto demonstrou a viabilidade de integrar sensores e atuadores em uma plataforma IoT com API RESTful, simulação via Node-RED e interface HMI desenvolvida com tecnologias web modernas. A solução é de baixo custo de implementação e pode ser adaptada para diferentes cenários de automação.
+
+Como trabalhos futuros, pretende-se: (i) substituir o armazenamento em memória por um banco de dados persistente; (ii) adicionar autenticação aos endpoints da API; (iii) integrar dispositivos físicos reais ao sistema, substituindo a simulação do Node-RED; e (iv) incorporar análise preditiva com base no histórico de leituras.
+
+\section*{Agradecimentos}
+
+Agradeço à Faculdade de Tecnologia SENAI Gaspar Ricardo Júnior e ao orientador Gabriel, que contribuiu para o desenvolvimento deste trabalho, e aos colegas da Turma Toyota-3 pelo apoio durante o processo de aprendizagem.
+
+\printbibliography
+
+\end{document}

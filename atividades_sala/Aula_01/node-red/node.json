@@ -93,7 +93,7 @@
         ],
         "repeat": "5",
         "crontab": "",
-        "once": false,
+        "once": true,
         "onceDelay": "0.1",
         "topic": "",
         "x": 230,
@@ -112,14 +112,21 @@
         "method": "PUT",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "http://localhost:8080/sensor/1",
+        "url": "{{{url}}}",
         "tls": "",
         "persist": false,
         "proxy": "",
         "insecureHTTPParser": false,
         "authType": "",
         "senderr": false,
-        "headers": [],
+        "headers": [
+            {
+                "keyType": "str",
+                "keyValue": "Content-Type",
+                "valueType": "str",
+                "valueValue": "application/json"
+            }
+        ],
         "x": 510,
         "y": 420,
         "wires": [
@@ -158,15 +165,15 @@
         "id": "f323a550524fa80a",
         "type": "function",
         "z": "f046b6947ded6c09",
-        "name": "Gera dados randômicos.",
-        "func": "let ativo = true;\n\nmsg.payload = {\n    \"temperatura\" : Math.random()*100,\n    \"pressao\": Math.random(),\n    \"umidade\": 1 + Math.random(),\n    \"sensor_presenca\": !ativo, \n    \"trava_seguranca\": !ativo, \n}\n\nreturn msg;",
+        "name": "Gera dados randômicos (multi-sensor).",
+        "func": "const sensorIds = [1, 2, 3];\n\nconst msgs = sensorIds.map(sensorId => ({\n    url: `http://localhost:8080/sensor/${sensorId}`,\n    payload: {\n        temperatura: parseFloat((Math.random() * 100).toFixed(1)),\n        pressao: parseFloat((900 + Math.random() * 200).toFixed(1)),\n        umidade: parseFloat((Math.random() * 100).toFixed(1)),\n        sensor_presenca: Math.random() > 0.5,\n        trava_seguranca: Math.random() > 0.5\n    }\n}));\n\nreturn [msgs];",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 410,
+        "x": 420,
         "y": 340,
         "wires": [
             [

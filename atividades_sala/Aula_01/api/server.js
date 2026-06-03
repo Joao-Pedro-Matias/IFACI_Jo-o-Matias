@@ -67,22 +67,19 @@ api.post('/newData', (req, res)=>{
     })
 
 api.put('/sensor/:id', (req,res)=>{
-    const id = req.params.id
+    const sensorId = parseInt(req.params.id)
     const newBody = req.body
-    
-    const index = iot_data.findIndex(p => p.id=== parseInt(id))
-    
-    if(index != -1){
-        iot_data[index] = {id: parseInt(id), ...newBody}
-        return res.status(200).send({
-            "msg":"Dados do sensor atualizados!"
-        })
+
+    const index = iot_data.findIndex(p => p.id === sensorId)
+
+    if(index !== -1){
+        iot_data[index] = {id: sensorId, ...newBody}
+    } else {
+        iot_data.push({id: sensorId, ...newBody})
+        if(sensorId > id) id = sensorId
     }
-    else{
-        return res.status(500).send({
-            "msg":"Erro ao atualizar o sensor!"
-        })
-    }
+
+    return res.status(200).send({"msg":"Dados do sensor atualizados!"})
 })
 
 
